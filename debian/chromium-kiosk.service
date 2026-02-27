@@ -1,0 +1,25 @@
+[Unit]
+Description=Chromium Kiosk – Teleprompter UI
+After=graphical.target teleprompter.service
+Wants=teleprompter.service
+
+[Service]
+Type=simple
+User=%i
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/%i/.Xauthority
+# Wait briefly for the PHP server to be ready before opening the browser
+ExecStartPre=/bin/sleep 3
+ExecStart=/usr/bin/chromium \
+    --kiosk \
+    --noerrdialogs \
+    --disable-infobars \
+    --disable-session-crashed-bubble \
+    --no-first-run \
+    http://localhost:8000
+Restart=on-failure
+RestartSec=5
+
+[Install]
+# Enable with: systemctl enable chromium-kiosk@YOUR_USERNAME
+WantedBy=graphical.target

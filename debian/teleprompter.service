@@ -1,0 +1,24 @@
+[Unit]
+Description=Modern Teleprompter (PHP artisan serve)
+After=network.target mariadb.service mysql.service
+Wants=mariadb.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/teleprompter
+# Serve on all interfaces so Chromium kiosk and LAN devices can connect
+ExecStart=/usr/bin/php artisan serve --host=0.0.0.0 --port=8000
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=teleprompter
+
+# Harden the service
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

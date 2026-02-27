@@ -1,0 +1,144 @@
+// Dashboard Styles
+
+.profile-picture {
+  max-height:90px;
+}
+
+// ── Upload card ──────────────────────────────────────────────────────────────
+
+.upload-card {
+  border: none;
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+
+  .upload-title {
+    font-weight: 700;
+    color: #2d3748;
+    font-size: 1.2rem;
+
+    i { margin-right: .4rem; color: #667eea; }
+  }
+}
+
+// Modern text input override for this page
+.form-control-modern {
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  padding: .75rem 1rem;
+  font-size: .95rem;
+  transition: border-color .2s ease, box-shadow .2s ease;
+
+  &:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, .15);
+    outline: none;
+  }
+
+  &::placeholder { color: #a0aec0; }
+}
+
+// ── Drag-and-drop zone ───────────────────────────────────────────────────────
+
+.drop-zone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+  padding: 2rem 1.5rem;
+  border: 2px dashed #cbd5e0;
+  border-radius: 12px;
+  background: #f7fafc;
+  cursor: pointer;
+  transition: border-color .2s ease, background .2s ease;
+  text-align: center;
+
+  &:hover,
+  &--active {
+    border-color: #667eea;
+    background: #ebf4ff;
+
+    .drop-zone__icon { color: #667eea; }
+  }
+
+  &__icon {
+    font-size: 2.4rem;
+    color: #a0aec0;
+    margin-bottom: .75rem;
+    transition: color .2s ease;
+  }
+
+  &__prompt {
+    color: #718096;
+    font-size: .95rem;
+    margin-bottom: 0;
+    line-height: 1.6;
+    pointer-events: none;
+  }
+
+  &__sub {
+    color: #667eea;
+    font-size: .875rem;
+    font-weight: 600;
+  }
+
+  &__file-name {
+    color: #2d3748;
+    font-weight: 600;
+    font-size: .9rem;
+    margin-bottom: 0;
+    word-break: break-all;
+
+    &::before {
+      content: '✓ ';
+      color: #48bb78;
+    }
+  }
+
+  // The real <input type="file"> sits invisibly over the whole zone
+  &__input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  &.has-file {
+    border-color: #48bb78;
+    background: #f0fff4;
+
+    .drop-zone__icon { color: #48bb78; }
+  }
+}
+
+// ── Upload submit button ─────────────────────────────────────────────────────
+
+.btn-upload {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: .875rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: .025em;
+  transition: transform .15s ease, box-shadow .15s ease;
+
+  i { margin-right: .4rem; }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, .4);
+    color: #fff;
+  }
+
+  &:active { transform: translateY(0); }
+
+  &:focus {
+    color: #fff;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, .3);
+  }
+}
