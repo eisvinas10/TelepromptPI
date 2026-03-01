@@ -3,7 +3,6 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import authRoutes from './routes/auth.js';
 import transcriptRoutes from './routes/transcripts.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -16,7 +15,6 @@ app.use(cors({
 }));
 app.use(express.json());
 
-app.use('/api/auth', authRoutes);
 app.use('/api/transcripts', transcriptRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
