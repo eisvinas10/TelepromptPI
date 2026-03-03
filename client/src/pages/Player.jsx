@@ -30,10 +30,10 @@ export default function Player() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  // Start at the bottom when content loads (original behaviour: start scrolled to bottom)
+  // Start at the top when content loads
   useEffect(() => {
     if (transcript && scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      scrollRef.current.scrollTop = 0;
     }
   }, [transcript]);
 
@@ -46,15 +46,16 @@ export default function Player() {
     }
   }, []);
 
-  // RAF scroll loop — scrolls UP (decreasing scrollTop), matching the original jQuery animate behaviour
+  // RAF scroll loop — scrolls DOWN (increasing scrollTop)
   const animate = useCallback(() => {
     if (!scrollRef.current || !isPlayingRef.current) return;
 
     const el = scrollRef.current;
-    const nextTop = el.scrollTop - speedRef.current * 0.5;
+    const nextTop = el.scrollTop + speedRef.current * 0.5;
+    const maxTop = el.scrollHeight - el.clientHeight;
 
-    if (nextTop <= 0) {
-      el.scrollTop = 0;
+    if (nextTop >= maxTop) {
+      el.scrollTop = maxTop;
       isPlayingRef.current = false;
       setIsPlaying(false);
       setShowControls(true);
@@ -90,14 +91,14 @@ export default function Player() {
   const restart = useCallback(() => {
     pause();
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      scrollRef.current.scrollTop = 0;
     }
   }, [pause]);
 
   const jumpToEnd = useCallback(() => {
     pause();
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = 0;
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [pause]);
 
@@ -175,12 +176,7 @@ export default function Player() {
       onMouseMove={resetHideTimer}
       onTouchStart={resetHideTimer}
     >
-      {/*
-        Scrollable container.
-        The inner text div has scaleY(-1) applied — this flips the text upside-down
-        so it reads correctly when reflected in the teleprompter mirror.
-        Scrolling runs from bottom → top (decreasing scrollTop), matching the original.
-      */}
+      {/* Scrollable container */}
       <div
         ref={scrollRef}
         className="w-full h-full overflow-y-auto"
@@ -188,7 +184,6 @@ export default function Player() {
       >
         <div
           style={{
-            transform: 'scaleY(-1)',
             paddingTop: '100vh',
             paddingBottom: '100vh',
             paddingLeft: '8vw',
