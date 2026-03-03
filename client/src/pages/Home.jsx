@@ -14,14 +14,23 @@ function formatDate(iso) {
 export default function Home() {
   const [transcripts, setTranscripts] = useState([]);
   const [loadingList, setLoadingList] = useState(true);
-  const [title, setTitle] = useState('');
+  const [deletingId, setDeletingId] = useState(null);
+  const [activeTab, setActiveTab] = useState('paste'); // 'paste' | 'upload'
+  const navigate = useNavigate();
+
+  // --- Upload state ---
+  const [uploadTitle, setUploadTitle] = useState('');
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [dragActive, setDragActive] = useState(false);
-  const [deletingId, setDeletingId] = useState(null);
   const fileInputRef = useRef(null);
-  const navigate = useNavigate();
+
+  // --- Paste state ---
+  const [pasteTitle, setPasteTitle] = useState('');
+  const [pasteContent, setPasteContent] = useState('');
+  const [pasting, setPasting] = useState(false);
+  const [pasteError, setPasteError] = useState('');
 
   const fetchTranscripts = useCallback(async () => {
     try {
@@ -38,6 +47,7 @@ export default function Home() {
     fetchTranscripts();
   }, [fetchTranscripts]);
 
+  // --- Upload handlers ---
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -59,25 +69,18 @@ export default function Home() {
   const handleUpload = async (e) => {
     e.preventDefault();
     setUploadError('');
-
-    if (!file) {
-      setUploadError('Please select a transcript file.');
-      return;
-    }
-    if (!title.trim()) {
-      setUploadError('Please enter a script name.');
-      return;
-    }
+    if (!file) { setUploadError('Please select a transcript file.'); return; }
+    if (!uploadTitle.trim()) { setUploadError('Please enter a script name.'); return; }
 
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('title', title.trim());
+    formData.append('title', uploadTitle.trim());
 
     setUploading(true);
     try {
       const res = await axios.post('/api/transcripts', formData);
       setTranscripts((prev) => [res.data, ...prev]);
-      setTitle('');
+      setUploadTitle('');
       setFile(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (err) {
@@ -87,6 +90,30 @@ export default function Home() {
     }
   };
 
+  // --- Paste handler ---
+  const handlePaste = async (e) => {
+    e.preventDefault();
+    setPasteError('');
+    if (!pasteContent.trim()) { setPasteError('Please paste or type your script text.'); return; }
+    if (!pasteTitle.trim()) { setPasteError('Please enter a script name.'); return; }
+
+    setPasting(true);
+    try {
+      const res = await axios.post('/api/transcripts/text', {
+        title: pasteTitle.trim(),
+        content: pasteContent,
+      });
+      setTranscripts((prev) => [res.data, ...prev]);
+      setPasteTitle('');
+      setPasteContent('');
+    } catch (err) {
+      setPasteError(err.response?.data?.error || 'Failed to save. Please try again.');
+    } finally {
+      setPasting(false);
+    }
+  };
+
+  // --- Delete handler ---
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this transcript?')) return;
     setDeletingId(id);
@@ -126,7 +153,7 @@ export default function Home() {
             <div className="text-center py-16 rounded-2xl border border-dashed border-neutral-800">
               <div className="text-3xl mb-3">📄</div>
               <p className="text-neutral-400 text-sm">No scripts yet.</p>
-              <p className="text-neutral-600 text-xs mt-1">Upload your first transcript below.</p>
+              <p className="text-neutral-600 text-xs mt-1">Add your first transcript below — it will appear on the <span className="text-neutral-500">/display</span> page.</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -169,99 +196,169 @@ export default function Home() {
         {/* Divider */}
         <div className="flex items-center gap-4">
           <div className="flex-1 h-px bg-neutral-800" />
-          <span className="text-xs text-neutral-600 uppercase tracking-widest">or upload new</span>
+          <span className="text-xs text-neutral-600 uppercase tracking-widest">add new</span>
           <div className="flex-1 h-px bg-neutral-800" />
         </div>
 
-        {/* Upload form */}
+        {/* Tab switcher + forms */}
         <section>
-          <h2 className="text-lg font-semibold text-white mb-5">Upload Transcript</h2>
-
-          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
-            {uploadError && (
-              <div className="mb-5 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-                {uploadError}
-              </div>
-            )}
-
-            <form onSubmit={handleUpload} className="space-y-5">
-              <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1.5 uppercase tracking-wider">
-                  Script Name
-                </label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-neutral-800 border border-neutral-700 rounded-xl text-white text-sm placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                  placeholder="e.g. Episode 12 Intro"
-                />
-              </div>
-
-              {/* Drop zone */}
-              <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1.5 uppercase tracking-wider">
-                  Transcript File
-                </label>
-                <div
-                  className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
-                    dragActive
-                      ? 'border-indigo-500 bg-indigo-500/5'
-                      : file
-                      ? 'border-emerald-500/50 bg-emerald-500/5'
-                      : 'border-neutral-700 hover:border-neutral-600 hover:bg-neutral-800/50'
-                  }`}
-                  onDragEnter={handleDrag}
-                  onDragOver={handleDrag}
-                  onDragLeave={handleDrag}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".txt,.md,.text"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                  {file ? (
-                    <div className="space-y-1">
-                      <div className="text-2xl">✓</div>
-                      <p className="text-sm font-medium text-emerald-400">{file.name}</p>
-                      <p className="text-xs text-neutral-600">Click to change file</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <div className="text-2xl text-neutral-600">
-                        <UploadIcon />
-                      </div>
-                      <p className="text-sm text-neutral-400">
-                        Drag &amp; drop your file here
-                      </p>
-                      <p className="text-xs text-neutral-600">
-                        or <span className="text-indigo-400">click to browse</span> · .txt, .md
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={uploading}
-                className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-colors text-sm flex items-center justify-center gap-2"
-              >
-                {uploading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Uploading…
-                  </>
-                ) : (
-                  'Upload Transcript'
-                )}
-              </button>
-            </form>
+          {/* Tabs */}
+          <div className="flex gap-1 bg-neutral-900 border border-neutral-800 rounded-xl p-1 mb-6 w-fit">
+            <button
+              onClick={() => setActiveTab('paste')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                activeTab === 'paste'
+                  ? 'bg-indigo-600 text-white'
+                  : 'text-neutral-500 hover:text-neutral-300'
+              }`}
+            >
+              Paste Text
+            </button>
+            <button
+              onClick={() => setActiveTab('upload')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                activeTab === 'upload'
+                  ? 'bg-indigo-600 text-white'
+                  : 'text-neutral-500 hover:text-neutral-300'
+              }`}
+            >
+              Upload File
+            </button>
           </div>
+
+          {/* Paste Text form */}
+          {activeTab === 'paste' && (
+            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
+              {pasteError && (
+                <div className="mb-5 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                  {pasteError}
+                </div>
+              )}
+              <form onSubmit={handlePaste} className="space-y-5">
+                <div>
+                  <label className="block text-xs font-medium text-neutral-400 mb-1.5 uppercase tracking-wider">
+                    Script Name
+                  </label>
+                  <input
+                    type="text"
+                    value={pasteTitle}
+                    onChange={(e) => setPasteTitle(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-neutral-800 border border-neutral-700 rounded-xl text-white text-sm placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                    placeholder="e.g. Episode 12 Intro"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-neutral-400 mb-1.5 uppercase tracking-wider">
+                    Script Text
+                  </label>
+                  <textarea
+                    value={pasteContent}
+                    onChange={(e) => setPasteContent(e.target.value)}
+                    rows={10}
+                    className="w-full px-3.5 py-2.5 bg-neutral-800 border border-neutral-700 rounded-xl text-white text-sm placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-y leading-relaxed"
+                    placeholder="Paste or type your script here…"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={pasting}
+                  className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-colors text-sm flex items-center justify-center gap-2"
+                >
+                  {pasting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Saving…
+                    </>
+                  ) : (
+                    'Save Script'
+                  )}
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* Upload File form */}
+          {activeTab === 'upload' && (
+            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
+              {uploadError && (
+                <div className="mb-5 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                  {uploadError}
+                </div>
+              )}
+              <form onSubmit={handleUpload} className="space-y-5">
+                <div>
+                  <label className="block text-xs font-medium text-neutral-400 mb-1.5 uppercase tracking-wider">
+                    Script Name
+                  </label>
+                  <input
+                    type="text"
+                    value={uploadTitle}
+                    onChange={(e) => setUploadTitle(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-neutral-800 border border-neutral-700 rounded-xl text-white text-sm placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                    placeholder="e.g. Episode 12 Intro"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-neutral-400 mb-1.5 uppercase tracking-wider">
+                    Transcript File
+                  </label>
+                  <div
+                    className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
+                      dragActive
+                        ? 'border-indigo-500 bg-indigo-500/5'
+                        : file
+                        ? 'border-emerald-500/50 bg-emerald-500/5'
+                        : 'border-neutral-700 hover:border-neutral-600 hover:bg-neutral-800/50'
+                    }`}
+                    onDragEnter={handleDrag}
+                    onDragOver={handleDrag}
+                    onDragLeave={handleDrag}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".txt,.md,.text"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    {file ? (
+                      <div className="space-y-1">
+                        <div className="text-2xl">✓</div>
+                        <p className="text-sm font-medium text-emerald-400">{file.name}</p>
+                        <p className="text-xs text-neutral-600">Click to change file</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="text-2xl text-neutral-600">
+                          <UploadIcon />
+                        </div>
+                        <p className="text-sm text-neutral-400">Drag &amp; drop your file here</p>
+                        <p className="text-xs text-neutral-600">
+                          or <span className="text-indigo-400">click to browse</span> · .txt, .md
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  disabled={uploading}
+                  className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-colors text-sm flex items-center justify-center gap-2"
+                >
+                  {uploading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Uploading…
+                    </>
+                  ) : (
+                    'Upload Transcript'
+                  )}
+                </button>
+              </form>
+            </div>
+          )}
         </section>
       </main>
     </div>

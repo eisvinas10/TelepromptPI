@@ -53,6 +53,34 @@ router.post('/', upload.single('file'), (req, res) => {
   res.status(201).json(transcript);
 });
 
+// Save pasted text as a new transcript
+router.post('/text', (req, res) => {
+  const { title, content } = req.body;
+  if (!content || !content.trim()) {
+    return res.status(400).json({ error: 'Content is required' });
+  }
+  if (!title || !title.trim()) {
+    return res.status(400).json({ error: 'Title is required' });
+  }
+
+  const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+  const filename = `${unique}.txt`;
+  const filePath = path.join(__dirname, '..', 'uploads', filename);
+
+  try {
+    fs.writeFileSync(filePath, content, 'utf-8');
+  } catch {
+    return res.status(500).json({ error: 'Failed to save transcript' });
+  }
+
+  const result = db
+    .prepare('INSERT INTO transcripts (title, filename, original_name) VALUES (?, ?, ?)')
+    .run(title.trim(), filename, `${title.trim()}.txt`);
+
+  const transcript = db.prepare('SELECT id, title, original_name, created_at FROM transcripts WHERE id = ?').get(result.lastInsertRowid);
+  res.status(201).json(transcript);
+});
+
 // Get a single transcript with content
 router.get('/:id', (req, res) => {
   const transcript = db

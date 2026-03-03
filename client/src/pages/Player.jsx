@@ -163,7 +163,7 @@ export default function Player() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-black gap-4">
         <p className="text-white/50 text-sm">{error}</p>
-        <button onClick={() => navigate('/')} className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
+        <button onClick={() => navigate(-1)} className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
           ← Back to scripts
         </button>
       </div>
@@ -222,7 +222,7 @@ export default function Player() {
             <div className="flex items-center justify-center gap-3">
               {/* Back home */}
               <button
-                onClick={() => navigate('/')}
+                onClick={() => navigate(-1)}
                 className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all"
                 title="Back to scripts"
               >
