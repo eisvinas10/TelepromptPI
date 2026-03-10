@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from '../components/Navbar.jsx';
 
@@ -16,7 +15,6 @@ export default function Home() {
   const [loadingList, setLoadingList] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
   const [activeTab, setActiveTab] = useState('paste'); // 'paste' | 'upload'
-  const navigate = useNavigate();
 
   // --- Upload state ---
   const [uploadTitle, setUploadTitle] = useState('');
@@ -167,13 +165,6 @@ export default function Home() {
                     <p className="text-xs text-neutral-600 mt-0.5">{formatDate(t.created_at)}</p>
                   </div>
                   <div className="flex items-center gap-2 ml-4 shrink-0">
-                    <button
-                      onClick={() => navigate(`/player/${t.id}`)}
-                      className="flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium rounded-lg transition-colors"
-                    >
-                      <PlayIcon />
-                      Play
-                    </button>
                     <button
                       onClick={() => handleDelete(t.id)}
                       disabled={deletingId === t.id}
@@ -366,14 +357,6 @@ export default function Home() {
 }
 
 // Icon components
-function PlayIcon() {
-  return (
-    <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
-      <path d="M3 2.5l10 5.5-10 5.5V2.5z" />
-    </svg>
-  );
-}
-
 function TrashIcon() {
   return (
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3 h-3">

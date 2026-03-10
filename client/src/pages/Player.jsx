@@ -4,6 +4,8 @@ import axios from 'axios';
 
 const MIN_SPEED = 1;
 const MAX_SPEED = 10;
+const MIN_FONT = 16;
+const MAX_FONT = 80;
 
 export default function Player() {
   const { id } = useParams();
@@ -14,6 +16,8 @@ export default function Player() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(3);
   const [showControls, setShowControls] = useState(true);
+  const [fontSize, setFontSize] = useState(30);
+  const [centered, setCentered] = useState(false);
 
   const scrollRef = useRef(null);
   const rafRef = useRef(null);
@@ -192,12 +196,13 @@ export default function Player() {
         >
           <p
             style={{
-              fontSize: '30px',
+              fontSize: `${fontSize}px`,
               lineHeight: '200%',
               color: '#ffffff',
               whiteSpace: 'pre-wrap',
               wordBreak: 'break-word',
               fontFamily: "'Inter', system-ui, sans-serif",
+              textAlign: centered ? 'center' : 'left',
             }}
           >
             {transcript.content}
@@ -284,6 +289,44 @@ export default function Player() {
               </button>
             </div>
 
+            {/* Text controls */}
+            <div className="flex items-center justify-center gap-3 mt-3">
+              {/* Font size down */}
+              <button
+                onClick={() => setFontSize((s) => Math.max(MIN_FONT, s - 2))}
+                disabled={fontSize <= MIN_FONT}
+                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white disabled:opacity-30 transition-all"
+                title="Smaller text"
+              >
+                <MinusIcon />
+              </button>
+
+              {/* Font size badge */}
+              <div className="flex flex-col items-center min-w-[52px]">
+                <span className="text-white text-xl font-bold leading-none">{fontSize}</span>
+                <span className="text-white/30 text-[10px] mt-0.5 uppercase tracking-wider">size</span>
+              </div>
+
+              {/* Font size up */}
+              <button
+                onClick={() => setFontSize((s) => Math.min(MAX_FONT, s + 2))}
+                disabled={fontSize >= MAX_FONT}
+                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white disabled:opacity-30 transition-all"
+                title="Larger text"
+              >
+                <PlusIcon />
+              </button>
+
+              {/* Center toggle */}
+              <button
+                onClick={() => setCentered((c) => !c)}
+                className={`p-2 rounded-lg transition-all ${centered ? 'bg-white/20 text-white' : 'bg-white/5 hover:bg-white/10 text-white/60 hover:text-white'}`}
+                title={centered ? 'Switch to left align' : 'Switch to center align'}
+              >
+                <AlignIcon centered={centered} />
+              </button>
+            </div>
+
             {/* Keyboard hints */}
             <div className="flex items-center justify-center gap-4 mt-5">
               {[
@@ -360,6 +403,22 @@ function HomeIcon() {
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-4 h-4">
       <path d="M3 9.5L10 3l7 6.5V17a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M7 18v-7h6v7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function AlignIcon({ centered }) {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
+      {centered ? (
+        <>
+          <path d="M2 4h12M4 8h8M2 12h12" strokeLinecap="round" />
+        </>
+      ) : (
+        <>
+          <path d="M2 4h12M2 8h8M2 12h10" strokeLinecap="round" />
+        </>
+      )}
     </svg>
   );
 }
