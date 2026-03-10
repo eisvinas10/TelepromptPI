@@ -16,20 +16,27 @@ export default function Display() {
   const [loadingList, setLoadingList] = useState(true);
   const navigate = useNavigate();
 
-  const fetchTranscripts = useCallback(async () => {
-    setLoadingList(true);
+  const fetchTranscripts = useCallback(async (silent = false) => {
+    if (!silent) setLoadingList(true);
     try {
       const res = await axios.get('/api/transcripts');
       setTranscripts(res.data);
     } catch {
       /* silently fail */
     } finally {
-      setLoadingList(false);
+      if (!silent) setLoadingList(false);
     }
   }, []);
 
+  // Initial load
   useEffect(() => {
     fetchTranscripts();
+  }, [fetchTranscripts]);
+
+  // Poll every 5 seconds for new scripts
+  useEffect(() => {
+    const interval = setInterval(() => fetchTranscripts(true), 5000);
+    return () => clearInterval(interval);
   }, [fetchTranscripts]);
 
   return (
